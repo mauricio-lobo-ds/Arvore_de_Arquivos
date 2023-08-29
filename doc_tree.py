@@ -1,5 +1,6 @@
 #pip install pyinstaller
-#pyinstaller --onefile --noconsole doc_tree.py
+#pyinstaller --onefile --noconsole --icon="icone.ico" doc_tree.py
+
 
 import os
 from reportlab.lib.pagesizes import A4
