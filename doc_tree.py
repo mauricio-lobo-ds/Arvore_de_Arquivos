@@ -12,6 +12,7 @@ from reportlab.lib import colors
 import datetime
 from PIL import Image, ImageTk
 import pystray
+import sys
 
 
 class App:
@@ -22,10 +23,14 @@ class App:
         self.root.resizable(False, False)
         self.background_color = '#c7dded'
         self.root.configure(bg=self.background_color)
-        self.root.iconbitmap(r'C:\Users\mauriciommll\Desktop\Codes -Trabalhos\Python\DocTree\dom.ico')
 
-        # Carregando e exibindo a imagem
-        self.dom = PhotoImage(file=r'C:\Users\mauriciommll\Desktop\Codes -Trabalhos\Python\DocTree\dom.png')
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        dom_path = os.path.join(base_path, 'dom.png')
+        icone_path = os.path.join(base_path, 'dom.ico')
+
+        self.root.iconbitmap(icone_path)
+        
+        self.dom = PhotoImage(file=dom_path)
         self.imagem_dom = Label(image=self.dom)
         self.imagem_dom.pack(pady=8)
         self.imagem_dom.configure(bg=self.background_color)
@@ -91,10 +96,7 @@ class App:
         self.source_entry = Entry(root, textvariable=self.source_var, width=56)
         self.source_entry.pack()
         
-        # Carrega a imagem do arquivo .ico
-        ico_image = Image.open(r'C:\Users\mauriciommll\Desktop\Codes -Trabalhos\Python\DocTree\dom.ico')
-        # Converte a imagem para o formato TKinter
-        ico_image = ImageTk.PhotoImage(ico_image)
+
         self.source_button = Button(root, text="Selecionar Diretório de Origem", command=self.select_source, width=27)
         self.source_button.pack(pady=8)
         

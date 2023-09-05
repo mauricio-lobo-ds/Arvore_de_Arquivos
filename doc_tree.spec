@@ -8,7 +8,7 @@ a = Analysis(
     ['doc_tree.py'],
     pathex=[],
     binaries=[],
-    datas=[(r'C:\Users\mauriciommll\Desktop\Codes -Trabalhos\Python\DocTree\icone.ico', '.'),  (r'C:\Users\mauriciommll\Desktop\Codes -Trabalhos\Python\DocTree\dom.png', '.')],
+    datas=[('dom.png', '.'), ('dom.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
