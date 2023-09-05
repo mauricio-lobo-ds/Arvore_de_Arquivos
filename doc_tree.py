@@ -1,12 +1,13 @@
+#Gerar Executável:
 #pip install pyinstaller
-#pyinstaller --onefile --noconsole doc_tree.py
+#pyinstaller doc_tree.spec
 
 import os
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import PageTemplate, BaseDocTemplate
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Image
-from tkinter import Tk, filedialog, messagebox, simpledialog, Label, Entry, Button, StringVar, ttk, Frame
+from tkinter import Tk, filedialog, messagebox, simpledialog, Label, Entry, Button, StringVar, ttk, Frame, PhotoImage
 from reportlab.lib import colors
 import datetime
 from PIL import Image, ImageTk
@@ -16,11 +17,21 @@ import pystray
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.geometry("350x300")
+        self.root.geometry("375x470")
         self.root.title("Gerador de Árvore de Arquivos")
-        self.root.iconbitmap('dom.ico')
+        self.root.resizable(False, False)
+        self.background_color = '#c7dded'
+        self.root.configure(bg=self.background_color)
+        self.root.iconbitmap(r'C:\Users\mauriciommll\Desktop\Codes -Trabalhos\Python\DocTree\dom.ico')
+
+        # Carregando e exibindo a imagem
+        self.dom = PhotoImage(file=r'C:\Users\mauriciommll\Desktop\Codes -Trabalhos\Python\DocTree\dom.png')
+        self.imagem_dom = Label(image=self.dom)
+        self.imagem_dom.pack(pady=8)
+        self.imagem_dom.configure(bg=self.background_color)
         
         self.title_var = StringVar()
+        self.om_var = StringVar()
         self.posto_var = StringVar()
         self.nome_var = StringVar()
         self.source_var = StringVar()
@@ -28,9 +39,26 @@ class App:
         
         self.title_label = Label(root, text="Título do Projeto:")
         self.title_label.pack()
+        self.title_label.configure(bg=self.background_color)
         
         self.title_entry = Entry(root, textvariable=self.title_var, width=56)
         self.title_entry.pack()
+
+        # Criar um Frame para Posto e Nome
+        om_frame = Frame(root)
+        om_frame.pack(pady=8)
+
+        self.posto_label = Label(om_frame, text="OM Responsável:")
+        self.posto_label.pack(side="left")
+        self.posto_label.configure(bg=self.background_color)
+
+        self.om_resp = ttk.Combobox(om_frame,textvariable=self.om_var, values=[
+            "CEPE", "DTECAMP", "DTINFRA-BE", "DTINFRA-BR", "DTINFRA-CO", "DTINFRA-MN", "DTINFRA-NT", "DTINFRA-RJ", "DTINFRA-SP"
+        ], width=37)
+        self.om_resp.pack(side="left")
+        # Registre a função de validação
+        validate_om = self.root.register(self.validate_posto_om)
+        self.om_resp.config(validate="key", validatecommand=(validate_om, "%P"))
 
         # Criar um Frame para Posto e Nome
         posto_nome_frame = Frame(root)
@@ -38,48 +66,55 @@ class App:
         
         self.posto_label = Label(posto_nome_frame, text="Posto:")
         self.posto_label.pack(side="left")
+        self.posto_label.configure(bg=self.background_color)
 
         self.posto_combobox = ttk.Combobox(posto_nome_frame, textvariable=self.posto_var, values=[
             "TB", "MB", "BR", "CL", "TC", "MJ", "CP", "1T", "2T", "AP", "SO", "1S", "2S", "3S", "CB", "S1", "S2"
         ], width=3)
         self.posto_combobox.pack(side="left")
         # Registre a função de validação
-        validate_posto = self.root.register(self.validate_posto)
+        validate_posto = self.root.register(self.validate_posto_om)
         self.posto_combobox.config(validate="key", validatecommand=(validate_posto, "%P"))
 
         self.nome_label = Label(posto_nome_frame, text="Nome:")
         self.nome_label.pack(side="left")
+        self.nome_label.configure(bg=self.background_color)
+
 
         self.nome_entry = Entry(posto_nome_frame, textvariable=self.nome_var, width=36)
         self.nome_entry.pack(side="left")
         
         self.source_label = Label(root, text="Diretório de Origem:")
         self.source_label.pack()
+        self.source_label.configure(bg=self.background_color)
 
         self.source_entry = Entry(root, textvariable=self.source_var, width=56)
         self.source_entry.pack()
         
         # Carrega a imagem do arquivo .ico
-        ico_image = Image.open(r"C:\Users\labregofgl.COMGAP\Documents\arvore_arquivos\dom.ico")
+        ico_image = Image.open(r'C:\Users\mauriciommll\Desktop\Codes -Trabalhos\Python\DocTree\dom.ico')
         # Converte a imagem para o formato TKinter
         ico_image = ImageTk.PhotoImage(ico_image)
-        self.source_button = Button(root, text="Selecionar Diretório de Origem", command=self.select_source)
+        self.source_button = Button(root, text="Selecionar Diretório de Origem", command=self.select_source, width=27)
         self.source_button.pack(pady=8)
         
-        self.generate_button = Button(root, text="Gerar PDF", command=self.generate_pdf)
+        self.generate_button = Button(root, text="Gerar PDF", command=self.generate_pdf, width=27)
         self.generate_button.pack(pady=8)
         
-        self.quit_button = Button(root, text="Sair", command=root.destroy)
+        self.quit_button = Button(root, text="Sair", command=root.destroy, width=27)
         self.quit_button.pack(pady=(5,20))
         
-        self.develop_label = Label(root, text="Desenvolvido pela Divisão de Gestão de engenharia da DIRINFRA", font=("Helvetica",8,"italic"))
+        self.develop_label = Label(root, text="Desenvolvido pela Divisão de Gestão de Engenharia da DIRINFRA", font=("Helvetica",7,"italic"))
         self.develop_label.pack(pady=0)
+        self.develop_label.configure(bg=self.background_color)
 
-        self.develop_label = Label(root, text="CP Mauricio e CP Labrego", font=("Helvetica",8,"italic"))
-        self.develop_label.pack(pady=0)
+
+        self.developer_label = Label(root, text="CP Mauricio e CP Labrego", font=("Helvetica",7,"italic"))
+        self.developer_label.pack(pady=0)
+        self.developer_label.configure(bg=self.background_color)
         
     
-    def validate_posto(self, new_value):
+    def validate_posto_om(self, new_value):
         # Verifique se o novo valor inserido está na lista de opções
         if new_value in self.posto_combobox["values"]:
             return True
@@ -98,6 +133,7 @@ class App:
     
     def generate_pdf(self):
         title = self.title_var.get()
+        om = self.om_var.get()  # Obter valor do campo OM Resp
         posto = self.posto_var.get()  # Obter valor do campo Posto
         nome = self.nome_var.get()  # Obter valor do campo Nome
         source_directory = self.source_var.get()
@@ -207,7 +243,6 @@ class App:
         
         pdf.build(elements)
         pass
-
 
 if __name__ == "__main__":
    root = Tk()
