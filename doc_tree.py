@@ -14,6 +14,11 @@ from PIL import Image, ImageTk
 import pystray
 import sys
 
+# Classe personalizada para criar um parágrafo com sublinhado
+class UnderlinedParagraph(Paragraph):
+    def __init__(self, text, style):
+        text_with_underline = "<u>{}</u>".format(text)
+        super().__init__(text_with_underline, style)
 
 class App:
     def __init__(self, root):
@@ -58,7 +63,7 @@ class App:
         self.posto_label.configure(bg=self.background_color)
 
         self.om_resp = ttk.Combobox(om_frame,textvariable=self.om_var, values=[
-            "CEPE", "DTECAMP", "DTINFRA-BE", "DTINFRA-BR", "DTINFRA-CO", "DTINFRA-MN", "DTINFRA-NT", "DTINFRA-RJ", "DTINFRA-SP"
+            "CEPE", "DTECAMP", "DTINFRA-BE", "DTINFRA-BR", "DTINFRA-CO", "DTINFRA-MN", "DTINFRA-NT", "DTINFRA-RJ", "DTINFRA-SJ"
         ], width=37)
         self.om_resp.pack(side="left")
         # Registre a função de validação
@@ -146,7 +151,7 @@ class App:
                 sanitized_source_path = source_directory.replace("/", "\\\\")
                 sanitized_destination_path = os.path.join(destination_directory.replace("/", "\\\\"), 'ARVORE_DE_ARQUIVOS.pdf')
                 
-                self.list_files(sanitized_source_path, sanitized_destination_path, title, posto, nome)
+                self.list_files(sanitized_source_path, sanitized_destination_path, title, posto, nome, om)
                 messagebox.showinfo("Informação", f"PRONTO!\nArquivo 'ARVORE_DE_ARQUIVOS.pdf' foi gerado na pasta:\n{source_directory}")
             else:
                 messagebox.showwarning("Informação", "Preencha todos os campos antes de gerar o PDF.")
@@ -163,7 +168,7 @@ class App:
             second_char = alphabet[index % 26]
             return first_char + second_char
 
-    def list_files(self, startpath, output_path, titulo, posto, nome):
+    def list_files(self, startpath, output_path, titulo, posto, nome, om):
         counters = [1]  # Lista de contadores para cada nível de indentação
         elements = []  # Lista de elementos a serem adicionados ao PDF
         styles = getSampleStyleSheet()
@@ -182,6 +187,30 @@ class App:
                                     parent=styles['BodyText'],
                                     fontName='Helvetica-Oblique',
                                     spaceAfter=0)
+        
+        MD_style = ParagraphStyle('TitleStyle',
+                                    parent=styles['BodyText'],
+                                    fontName='Helvetica-Bold',
+                                    fontSize=11,  # Definir tamanho da fonte
+                                    alignment=1  # 1 é para alinhamento centralizado
+                                    )
+        
+        COMAER_style = ParagraphStyle('TitleStyle',
+                                    parent=styles['BodyText'],
+                                    fontName='Helvetica',
+                                    fontSize=11,  # Definir tamanho da fonte
+                                    alignment=1  # 1 é para alinhamento centralizado
+                                    )
+        
+        OM_style = ParagraphStyle('TitleStyle',
+                                    parent=styles['BodyText'],
+                                    fontName='Helvetica',
+                                    fontSize=11,  # Definir tamanho da fonte
+                                    alignment=1,  # 1 é para alinhamento centralizado
+                                    textDecoration='underline',
+                                    spaceAfter=18
+                                    )
+        
         title_style = ParagraphStyle('TitleStyle',
                                     parent=styles['BodyText'],
                                     fontName='Helvetica-Bold',
@@ -196,9 +225,23 @@ class App:
                                     fontName='Helvetica',
                                     fontSize=14,  # Definir tamanho da fonte
                                     alignment=1,  # 1 é para alinhamento centralizado
-                                    leading=36,
-                                    spaceAfter=12)
+                                    leading=24,
+                                    spaceAfter=2)
 
+        om_dict = {"DTINFRA-BE":"DESTACAMENTO DE INFRAESTRUTURA DA AERONÁUTICA DE BELÉM",
+                   "DTINFRA-BR":"DESTACAMENTO DE INFRAESTRUTURA DA AERONÁUTICA DE BRASÍLIA",
+                   "DTINFRA-CO":"DESTACAMENTO DE INFRAESTRUTURA DA AERONÁUTICA DE CANOAS",
+                   "DTINFRA-MN":"DESTACAMENTO DE INFRAESTRUTURA DA AERONÁUTICA DE MANAUS",
+                   "DTINFRA-NT":"DESTACAMENTO DE INFRAESTRUTURA DA AERONÁUTICA DE NATAL",
+                   "DTINFRA-RJ":"DESTACAMENTO DE INFRAESTRUTURA DA AERONÁUTICA DO RIO DE JANEIRO",
+                   "DTINFRA-SJ":"DESTACAMENTO DE INFRAESTRUTURA DA AERONÁUTICA DE SÃO JOSÉ DOS CAMPOS",
+                   "DTECAMP":"DESTACAMENTO DE ENGENHARIA DE CAMPANHA",
+                   "CEPE": "CENTRO DE ESTUDOS E PROJETOS DE ENGENHARIA DA AERONÁUTICA"}
+        
+        elements.append(Paragraph("MINISTÉRIO DA DEFESA", MD_style))
+        elements.append(Paragraph("COMANDO DA AERONÁUTICA", COMAER_style))
+        om_sublinhada = UnderlinedParagraph(f"{om_dict[om]}",OM_style)
+        elements.append(om_sublinhada)
         elements.append(Paragraph(f"{titulo}", title_style))
         elements.append(Paragraph(f"{titulo_2}", title_style_2))
 
@@ -221,7 +264,7 @@ class App:
 
                 index_str = '.'.join(str(count) for count in counters[1:level + 1])
 
-                elements.append(Paragraph(f"{indent}{index_str}. {os.path.basename(root)}", folder_style))
+                elements.append(Paragraph(f"{indent}[{index_str}]   {os.path.basename(root)}", folder_style))
 
             sub_indent = '&nbsp;' * 4 * (level + 1)
             file_counter = 1
@@ -231,7 +274,7 @@ class App:
                     file_index = f"{self.get_excel_style_alphabet_index(file_counter-1)}"
                 else:
                     file_index = f"{index_str}.{self.get_excel_style_alphabet_index(file_counter-1)}"
-                elements.append(Paragraph(f"{sub_indent}{file_index}. {filename}", file_style))
+                elements.append(Paragraph(f"{sub_indent}[{file_index}]   {filename}", file_style))
                 if filename == "ARVORE_DE_ARQUIVOS.pdf":
                     flag_treefile = 1
                 file_counter += 1
@@ -239,9 +282,9 @@ class App:
             if level == 0:
                 file_index = f"{self.get_excel_style_alphabet_index(file_counter-1)}"
                 if flag_treefile == 0:
-                    elements.append(Paragraph(f"{sub_indent}{file_index}. ARVORE_DE_ARQUIVOS.pdf", file_style))
+                    elements.append(Paragraph(f"{sub_indent}[{file_index}]   ARVORE_DE_ARQUIVOS.pdf", file_style))
 
-        pdf = SimpleDocTemplate(output_path, pagesize=A4, showBoundary=1)
+        pdf = SimpleDocTemplate(output_path, pagesize=A4, showBoundary=0, leftMargin=50, rightMargin=30, topMargin=30, bottomMargin=30)
         
         pdf.build(elements)
         pass
